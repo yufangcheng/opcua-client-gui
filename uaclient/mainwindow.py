@@ -21,14 +21,13 @@ from uaclient.connection_dialog import ConnectionDialog
 from uaclient.application_certificate_dialog import ApplicationCertificateDialog
 from uaclient.graphwidget import GraphUI
 
-from uawidgets import resources  # must be here for ressources even if not used
+from uawidgets import resources  # must be here for resources even if not used
 from uawidgets.attrs_widget import AttrsWidget
 from uawidgets.tree_widget import TreeWidget
 from uawidgets.refs_widget import RefsWidget
 from uawidgets.utils import trycatchslot
 from uawidgets.logger import QtHandler
 from uawidgets.call_method_dialog import CallMethodDialog
-
 
 logger = logging.getLogger(__name__)
 
@@ -169,7 +168,7 @@ class DataChangeUI(object):
             if node is None:
                 return
         if node in self._subscribed_nodes:
-            logger.warning("allready subscribed to node: %s ", node)
+            logger.warning("already subscribed to node: %s ", node)
             return
         self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
         text = str(node.read_display_name().Text)
@@ -220,7 +219,7 @@ class Window(QMainWindow):
         self.ui.setupUi(self)
         self.setWindowIcon(QIcon(":/network.svg"))
 
-        # fix stuff imposible to do in qtdesigner
+        # fix stuff impossible to do in qtdesigner
         # remove dock titlebar for addressbar
         w = QWidget()
         self.ui.addrDockWidget.setTitleBarWidget(w)
@@ -237,7 +236,8 @@ class Window(QMainWindow):
         QCoreApplication.setApplicationName("OpcUaClient")
         self.settings = QSettings()
 
-        self._address_list = self.settings.value("address_list", ["opc.tcp://localhost:4840", "opc.tcp://localhost:53530/OPCUA/SimulationServer/"])
+        self._address_list = self.settings.value("address_list", ["opc.tcp://localhost:4840",
+                                                                  "opc.tcp://localhost:53530/OPCUA/SimulationServer/"])
         print("ADR", self._address_list)
         self._address_list_max_count = int(self.settings.value("address_list_max_count", 10))
 
@@ -271,7 +271,8 @@ class Window(QMainWindow):
         self.ui.treeView.selectionModel().selectionChanged.connect(self.show_attrs)
         self.ui.attrRefreshButton.clicked.connect(self.show_attrs)
 
-        self.resize(int(self.settings.value("main_window_width", 800)), int(self.settings.value("main_window_height", 600)))
+        self.resize(int(self.settings.value("main_window_width", 800)),
+                    int(self.settings.value("main_window_height", 600)))
         data = self.settings.value("main_window_state", None)
         if data:
             self.restoreState(data)
@@ -312,11 +313,11 @@ class Window(QMainWindow):
             self.uaclient.application_certificate_path = dia.certificate_path
             self.uaclient.application_private_key_path = dia.private_key_path
         self.uaclient.save_application_certificate_settings()
-            
+
     @trycatchslot
     def show_refs(self, selection):
         if isinstance(selection, QItemSelection):
-            if not selection.indexes(): # no selection
+            if not selection.indexes():  # no selection
                 return
 
         node = self.get_current_node()
@@ -326,7 +327,7 @@ class Window(QMainWindow):
     @trycatchslot
     def show_attrs(self, selection):
         if isinstance(selection, QItemSelection):
-            if not selection.indexes(): # no selection
+            if not selection.indexes():  # no selection
                 return
 
         node = self.get_current_node()
@@ -383,7 +384,6 @@ class Window(QMainWindow):
             self.attrs_ui.clear()
             self.datachange_ui.clear()
             self.event_ui.clear()
-
 
     def closeEvent(self, event):
         self.tree_ui.save_state()
@@ -463,10 +463,10 @@ def main():
     logging.getLogger().addHandler(handler)
     logging.getLogger("uaclient").setLevel(logging.INFO)
     logging.getLogger("uawidgets").setLevel(logging.INFO)
-    #logging.getLogger("opcua").setLevel(logging.INFO)  # to enable logging of ua client library
+    # logging.getLogger("opcua").setLevel(logging.INFO)  # to enable logging of ua client library
 
     # set stylesheet
-    if (QSettings().value("dark_mode", "false") == "true"):
+    if QSettings().value("dark_mode", "false") == "true":
         file = QFile(":/dark.qss")
         file.open(QFile.ReadOnly | QFile.Text)
         stream = QTextStream(file)
