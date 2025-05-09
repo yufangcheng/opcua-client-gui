@@ -1,33 +1,29 @@
 #! /usr/bin/env python3
 
-import sys
-
-from datetime import datetime
 import logging
+import sys
+from datetime import datetime
 
 from PyQt5.QtCore import pyqtSignal, QFile, QTimer, Qt, QObject, QSettings, QTextStream, QItemSelection, \
     QCoreApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QWidget, QApplication, QMenu, QDialog
-
-from uaclient.theme import breeze_resources
-
 from asyncua import ua
 from asyncua.sync import SyncNode
-
-from uaclient.uaclient import UaClient
-from uaclient.mainwindow_ui import Ui_MainWindow
-from uaclient.connection_dialog import ConnectionDialog
-from uaclient.application_certificate_dialog import ApplicationCertificateDialog
-from uaclient.graphwidget import GraphUI
-
-from uawidgets import resources  # must be here for resources even if not used
 from uawidgets.attrs_widget import AttrsWidget
-from uawidgets.tree_widget import TreeWidget
-from uawidgets.refs_widget import RefsWidget
-from uawidgets.utils import trycatchslot
-from uawidgets.logger import QtHandler
 from uawidgets.call_method_dialog import CallMethodDialog
+from uawidgets.logger import QtHandler
+from uawidgets.refs_widget import RefsWidget
+from uawidgets.tree_widget import TreeWidget
+from uawidgets.utils import trycatchslot
+
+from uaclient.application_certificate_dialog import ApplicationCertificateDialog
+from uaclient.connection_dialog import ConnectionDialog
+from uaclient.graphwidget import GraphUI
+from uaclient.mainwindow_ui import Ui_MainWindow
+from uaclient.persistence import save2Database, save_to_database
+from uaclient.uaclient import UaClient
+import threading, schedule, time
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +123,7 @@ class DataChangeUI(object):
         self.window = window
         self.uaclient = uaclient
         self._subhandler = DataChangeHandler()
-        self._subscribed_nodes = []
+        self._subscribed_nodes = []  # 已监听的数据变更节点列表
         self.model = QStandardItemModel()
         self.window.ui.subView.setModel(self.model)
         self.window.ui.subView.horizontalHeader().setSectionResizeMode(1)
@@ -140,6 +136,7 @@ class DataChangeUI(object):
         self.window.addAction(self.window.ui.actionUnsubscribeDataChange)
 
         # handle subscriptions
+        # Qt.QueuedConnection 异步处理
         self._subhandler.data_change_fired.connect(self._update_subscription_model, type=Qt.QueuedConnection)
 
         # accept drops
@@ -163,19 +160,25 @@ class DataChangeUI(object):
 
     @trycatchslot
     def _subscribe(self, node=None):
+        """
+        连接 window.ui.actionSubscribeDataChange.triggered 的 slot
+        """
         if not isinstance(node, SyncNode):
             node = self.window.get_current_node()
             if node is None:
                 return
         if node in self._subscribed_nodes:
-            logger.warning("already subscribed to node: %s ", node)
+            logger.warning("already subscribed to node: %s ", node)  # 已监听
             return
+        # 设置表头
         self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
         text = str(node.read_display_name().Text)
+        # 一行的数据：数据名，数据值（默认没数据），时间戳（默认无时间戳），待拿到数据后刷新这行
         row = [QStandardItem(text), QStandardItem("No Data yet"), QStandardItem("")]
         row[0].setData(node)
         self.model.appendRow(row)
         self._subscribed_nodes.append(node)
+        # 调用 raise_() 方法将窗口部件提升到其所在父窗口部件堆叠顺序的最顶层
         self.window.ui.subDockWidget.raise_()
         try:
             self.uaclient.subscribe_datachange(node, self._subhandler)
@@ -199,6 +202,7 @@ class DataChangeUI(object):
                 self.model.removeRow(i)
             i += 1
 
+    @save2Database
     def _update_subscription_model(self, node, value, timestamp):
         i = 0
         while self.model.item(i):
@@ -215,6 +219,7 @@ class Window(QMainWindow):
 
     def __init__(self):
         QMainWindow.__init__(self)
+        # 将 ui 布局应用到 self 当前主窗口并设置图标
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setWindowIcon(QIcon(":/network.svg"))
@@ -223,7 +228,7 @@ class Window(QMainWindow):
         # remove dock titlebar for addressbar
         w = QWidget()
         self.ui.addrDockWidget.setTitleBarWidget(w)
-        # tabify some docks
+        # 将多个 QDockWidget 组合成标签式的停靠窗口
         self.tabifyDockWidget(self.ui.evDockWidget, self.ui.subDockWidget)
         self.tabifyDockWidget(self.ui.subDockWidget, self.ui.refDockWidget)
         self.tabifyDockWidget(self.ui.refDockWidget, self.ui.graphDockWidget)
@@ -277,6 +282,11 @@ class Window(QMainWindow):
         if data:
             self.restoreState(data)
 
+        """
+        注册一些按钮和动作处理函数：
+        connect
+        disconnect
+        """
         self.ui.connectButton.clicked.connect(self.connect)
         self.ui.disconnectButton.clicked.connect(self.disconnect)
         # self.ui.treeView.expanded.connect(self._fit)
@@ -456,6 +466,21 @@ class Window(QMainWindow):
         msg.exec_()
 
 
+def runIntervalTask(interval, task):
+    schedule.every(interval).seconds.do(task)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+
+def persist_data():
+    t = threading.Thread(target=lambda: runIntervalTask(5, lambda: [
+        save_to_database()
+    ]))
+    t.daemon = True
+    t.start()
+
+
 def main():
     app = QApplication(sys.argv)
     client = Window()
@@ -473,6 +498,7 @@ def main():
         app.setStyleSheet(stream.readAll())
 
     client.show()
+    persist_data()
     sys.exit(app.exec_())
 
 
