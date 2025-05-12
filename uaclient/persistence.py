@@ -1,11 +1,12 @@
 from collections import defaultdict
 from sqlalchemy.orm import sessionmaker
-from uaclient.mysqlConfig import engine, is_connected
-from uaclient.data import Data
+from uaclient.config.clientConfig import collect_buff_size
+from uaclient.config.mysqlConfig import engine
+from uaclient.db_entity.nodeData import NodeData
 from dateutil import parser
 
 
-def save2Database(func):
+def save2database(func):
     def wrapper(self, *args):
         device_upload(*args)
         return func(self, *args)
@@ -14,20 +15,17 @@ def save2Database(func):
 
 
 buffer = defaultdict(list)
-stack_max_size = 5
 
 
 def device_upload(node, value, timestamp):
     stack = buffer[node]
     stack.append((value, timestamp))
-    if len(stack) > stack_max_size:
+    if len(stack) > collect_buff_size:
         stack.pop(0)
     # print(f"节点: {node}, 数据条数: {len(stack)}")
 
 
 def save_to_database():
-    if not is_connected:
-        return
     session = sessionmaker(bind=engine)
     with session() as s:
         data_list = []
@@ -37,7 +35,7 @@ def save_to_database():
             # print(f"处理节点: {node}, 数据: {data_stack}")
             if data_stack:
                 data, time_str = data_stack.pop()
-                data_list.append(Data(
+                data_list.append(NodeData(
                     node=str(node),
                     data=str(data),
                     created_at=parser.parse(time_str)

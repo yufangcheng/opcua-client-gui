@@ -1,15 +1,13 @@
 from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from . import Base
 
 
-class Data(Base):
+class NodeData(Base):
     """
-    【警报数据表】实体类
+    【节点数据表】实体类
     """
 
-    __tablename__ = 'data'
+    __tablename__ = 'node_data'
 
     id = Column(Integer, primary_key=True, nullable=False)
     node = Column(String(300), nullable=False, comment='节点')

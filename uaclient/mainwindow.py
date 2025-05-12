@@ -21,7 +21,8 @@ from uaclient.application_certificate_dialog import ApplicationCertificateDialog
 from uaclient.connection_dialog import ConnectionDialog
 from uaclient.graphwidget import GraphUI
 from uaclient.mainwindow_ui import Ui_MainWindow
-from uaclient.persistence import save2Database, save_to_database
+from uaclient.config.clientConfig import collect_enabled, collect_freq_sec
+from uaclient.persistence import save2database, save_to_database
 from uaclient.uaclient import UaClient
 import threading, schedule, time
 
@@ -202,7 +203,7 @@ class DataChangeUI(object):
                 self.model.removeRow(i)
             i += 1
 
-    @save2Database
+    @save2database
     def _update_subscription_model(self, node, value, timestamp):
         i = 0
         while self.model.item(i):
@@ -474,7 +475,7 @@ def runIntervalTask(interval, task):
 
 
 def persist_data():
-    t = threading.Thread(target=lambda: runIntervalTask(5, lambda: [
+    t = threading.Thread(target=lambda: runIntervalTask(collect_freq_sec - 1, lambda: [
         save_to_database()
     ]))
     t.daemon = True
@@ -498,7 +499,9 @@ def main():
         app.setStyleSheet(stream.readAll())
 
     client.show()
-    persist_data()
+    # 开启数据采集入库之后才会保存到数据库
+    if collect_enabled:
+        persist_data()
     sys.exit(app.exec_())
 
 
