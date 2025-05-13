@@ -1,9 +1,11 @@
+import math
 from collections import defaultdict
 from sqlalchemy.orm import sessionmaker
 from uaclient.config.clientConfig import collect_buff_size
 from uaclient.config.mysqlConfig import engine
 from uaclient.db_entity.nodeData import NodeData
 from dateutil import parser
+from concurrent.futures import ThreadPoolExecutor
 
 
 def save2database(func):
@@ -26,6 +28,15 @@ def device_upload(node, value, timestamp):
 
 
 def save_to_database():
+    _do_save()
+    # max_worker_num = math.floor(len(buffer.items()) / 5)
+    # if max_worker_num < 1:
+    #     max_worker_num = 3
+    # with ThreadPoolExecutor(max_workers=max_worker_num) as executor:
+    #     executor.submit(_do_save)
+
+
+def _do_save():
     session = sessionmaker(bind=engine)
     with session() as s:
         data_list = []

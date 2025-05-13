@@ -25,6 +25,8 @@ from uaclient.config.clientConfig import collect_enabled, collect_freq_sec
 from uaclient.persistence import save2database, save_to_database
 from uaclient.uaclient import UaClient
 import threading, schedule, time
+from typing import List, Any, Callable
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -171,23 +173,28 @@ class DataChangeUI(object):
         if node in self._subscribed_nodes:
             logger.warning("already subscribed to node: %s ", node)  # 已监听
             return
-        # 设置表头
-        self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
-        text = str(node.read_display_name().Text)
-        # 一行的数据：数据名，数据值（默认没数据），时间戳（默认无时间戳），待拿到数据后刷新这行
-        row = [QStandardItem(text), QStandardItem("No Data yet"), QStandardItem("")]
-        row[0].setData(node)
-        self.model.appendRow(row)
-        self._subscribed_nodes.append(node)
-        # 调用 raise_() 方法将窗口部件提升到其所在父窗口部件堆叠顺序的最顶层
-        self.window.ui.subDockWidget.raise_()
-        try:
-            self.uaclient.subscribe_datachange(node, self._subhandler)
-        except Exception as ex:
-            self.window.show_error(ex)
-            idx = self.model.indexFromItem(row[0])
-            self.model.takeRow(idx.row())
-            raise
+        # 判断是否有子节点，如果有则深度遍历，实现订阅目录
+
+        if len(node.get_children()) > 0:
+            batch_process(array=node.get_children(), process_func=self._subscribe)
+        else:
+            # 设置表头
+            self.model.setHorizontalHeaderLabels(["DisplayName", "Value", "Timestamp"])
+            text = str(node.read_display_name().Text)
+            # 一行的数据：数据名，数据值（默认没数据），时间戳（默认无时间戳），待拿到数据后刷新这行
+            row = [QStandardItem(text), QStandardItem("No Data yet"), QStandardItem("")]
+            row[0].setData(node)
+            self.model.appendRow(row)
+            self._subscribed_nodes.append(node)
+            # 调用 raise_() 方法将窗口部件提升到其所在父窗口部件堆叠顺序的最顶层
+            self.window.ui.subDockWidget.raise_()
+            try:
+                self.uaclient.subscribe_datachange(node, self._subhandler)
+            except Exception as ex:
+                self.window.show_error(ex)
+                idx = self.model.indexFromItem(row[0])
+                self.model.takeRow(idx.row())
+                raise
 
     @trycatchslot
     def _unsubscribe(self):
@@ -467,6 +474,37 @@ class Window(QMainWindow):
         msg.exec_()
 
 
+def batch_process(array: List[Any], batch_size: int = 20, interval: float = 1.0,
+                  process_func: Callable[[SyncNode], None] = None, max_workers: int = 5) -> None:
+    """
+    将数组按指定大小分批处理，并在每批处理后暂停指定时间
+
+    参数:
+        array: 待处理的数组
+        batch_size: 每批处理的元素数量，默认为20
+        interval: 每批处理后的暂停时间（秒），默认为1.0秒
+        process_func: 处理每批元素的函数，如果为None则打印该批次
+        max_workers: 线程池最大工作线程数，默认为5
+    """
+    total = len(array)
+
+    def process_and_wait(batch_idx, batch_data):
+        if process_func:
+            for data in batch_data:
+                process_func(data)
+        else:
+            print(f"批次 {batch_idx} 处理完成: {batch_data[:3]}...")
+        # 非最后一批需要等待
+        if batch_idx * batch_size + batch_size < total:
+            time.sleep(interval)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for i in range(0, total, batch_size):
+            batch = array[i:i + batch_size]
+            batch_idx = i // batch_size
+            executor.submit(process_and_wait, batch_idx, batch)
+
+
 def runIntervalTask(interval, task):
     schedule.every(interval).seconds.do(task)
     while True:
@@ -475,7 +513,8 @@ def runIntervalTask(interval, task):
 
 
 def persist_data():
-    t = threading.Thread(target=lambda: runIntervalTask(collect_freq_sec - 1, lambda: [
+    time.sleep(3)
+    t = threading.Thread(target=lambda: runIntervalTask(collect_freq_sec, lambda: [
         save_to_database()
     ]))
     t.daemon = True

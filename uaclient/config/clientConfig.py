@@ -16,8 +16,8 @@ parser.add_argument('--db_name', default='data')
 
 # 采集相关配置
 parser.add_argument('--collect_enabled', action='store_true', default=True)
-parser.add_argument('--collect_buff_size', default=5)
-parser.add_argument('--collect_freq_sec', default=3)
+parser.add_argument('--collect_buff_size', type=int, default=5)
+parser.add_argument('--collect_freq_sec', type=int, default=3)
 
 args = parser.parse_args()
 
@@ -39,5 +39,5 @@ collect_buff_size = args.collect_buff_size
 if collect_buff_size < 1:
     collect_buff_size = 5
 collect_freq_sec = args.collect_freq_sec
-if collect_freq_sec < 2:
-    collect_freq_sec: 2
+if collect_freq_sec < 1:
+    collect_freq_sec: 1
