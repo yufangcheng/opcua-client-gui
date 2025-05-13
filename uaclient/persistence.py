@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from uaclient.config.clientConfig import device, collect_buff_size
 from uaclient.config.mysqlConfig import engine
 from uaclient.db_entity.deviceNodeData import DeviceNodeData
+from uaclient.db_entity.deviceNode import DeviceNode
 
 
 def save2database(func):
@@ -56,3 +57,26 @@ def _do_save():
             # print(f"保存数据到数据库，条数: {len(data_list)}")
             s.add_all(data_list)
             s.commit()
+
+
+def group_nodes():
+    _do_group()
+
+
+def _do_group():
+    session = sessionmaker(bind=engine)
+    with session() as s:
+        results = [row[0] for row in s.query(DeviceNodeData.node).group_by(DeviceNodeData.node).all()]
+        if len(results) > 0:
+            existed_nodes = {row[0] for row in s.query(DeviceNode.node).filter(DeviceNode.node.in_(results))}
+            new_nodes = [item for item in results if item not in existed_nodes]
+            nodes = []
+            if len(new_nodes) > 0:
+                for node in new_nodes:
+                    nodes.append(DeviceNode(
+                        device=device,
+                        node=str(node),
+                    ))
+            if len(nodes) > 0:
+                s.add_all(nodes)
+                s.commit()

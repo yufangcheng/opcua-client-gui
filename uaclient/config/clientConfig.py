@@ -21,6 +21,7 @@ _parser.add_argument('--db_name', default='data')
 _parser.add_argument('--collect_enabled', action='store_true', default=True)
 _parser.add_argument('--collect_buff_size', type=int, default=5)
 _parser.add_argument('--collect_freq_sec', type=int, default=3)
+_parser.add_argument('--group_node_sec', type=int, default=30)
 
 _args = _parser.parse_args()
 
@@ -49,3 +50,6 @@ if collect_buff_size < 1:
 collect_freq_sec = _args.collect_freq_sec
 if collect_freq_sec < 1:
     collect_freq_sec: 1
+group_node_sec = _args.group_node_sec
+if group_node_sec < 1:
+    group_node_sec = 30

@@ -23,11 +23,11 @@ from uawidgets.tree_widget import TreeWidget
 from uawidgets.utils import trycatchslot
 
 from uaclient.application_certificate_dialog import ApplicationCertificateDialog
-from uaclient.config.clientConfig import collect_enabled, collect_freq_sec
+from uaclient.config.clientConfig import collect_enabled, collect_freq_sec, group_node_sec
 from uaclient.connection_dialog import ConnectionDialog
 from uaclient.graphwidget import GraphUI
 from uaclient.mainwindow_ui import Ui_MainWindow
-from uaclient.persistence import save2database, save_to_database
+from uaclient.persistence import save2database, save_to_database, group_nodes
 from uaclient.uaclient import UaClient
 
 logger = logging.getLogger(__name__)
@@ -516,11 +516,16 @@ def runIntervalTask(interval, task):
 
 def persist_data():
     time.sleep(3)
-    t = threading.Thread(target=lambda: runIntervalTask(collect_freq_sec, lambda: [
+    t1 = threading.Thread(target=lambda: runIntervalTask(collect_freq_sec, lambda: [
         save_to_database()
     ]))
-    t.daemon = True
-    t.start()
+    t2 = threading.Thread(target=lambda: runIntervalTask(group_node_sec, lambda: [
+        group_nodes()
+    ]))
+    t1.daemon = True
+    t2.daemon = True
+    t1.start()
+    t2.start()
 
 
 def main():
