@@ -18,7 +18,7 @@ _parser.add_argument('--db_password', default='pjdgul2k')
 _parser.add_argument('--db_name', default='data')
 
 # 采集相关配置
-_parser.add_argument('--collect_enabled', action='store_true', default=True)
+_parser.add_argument('--collect_enabled', action='store_true', default=False)
 _parser.add_argument('--collect_buff_size', type=int, default=5)
 _parser.add_argument('--collect_freq_sec', type=int, default=3)
 _parser.add_argument('--group_node_sec', type=int, default=30)
