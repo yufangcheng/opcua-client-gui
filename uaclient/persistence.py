@@ -16,11 +16,11 @@ def save2database(func):
     return wrapper
 
 
-buffer = defaultdict(list)
+_buffer = defaultdict(list)
 
 
 def device_upload(node, value, timestamp):
-    stack = buffer[node]
+    stack = _buffer[node]
     stack.append((value, timestamp))
     if len(stack) > collect_buff_size:
         stack.pop(0)
@@ -40,8 +40,8 @@ def _do_save():
     session = sessionmaker(bind=engine)
     with session() as s:
         data_list = []
-        buffer_copy = buffer.copy()
-        buffer.clear()
+        buffer_copy = _buffer.copy()
+        _buffer.clear()
         for node, data_stack in buffer_copy.items():
             # print(f"处理节点: {node}, 数据: {data_stack}")
             if data_stack:
