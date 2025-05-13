@@ -10,6 +10,7 @@ from uaclient.config.logConfig import logger
 这里 import 是为了让数据库实体类在初始化时被注册到 Base 中
 在 standalone 模式下，使用 SQLite 数据库，启动后使用 Base.metadata.create_all() 创建表
 """
+from uaclient.db_entity.deviceNodeData import DeviceNodeData
 
 """
 该目录模块中的 __init__.py 执行了 Base = declarative_base()

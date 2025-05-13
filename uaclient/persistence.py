@@ -3,9 +3,9 @@ from collections import defaultdict
 from dateutil import parser
 from sqlalchemy.orm import sessionmaker
 
-from uaclient.config.clientConfig import collect_buff_size
+from uaclient.config.clientConfig import device, collect_buff_size
 from uaclient.config.mysqlConfig import engine
-from uaclient.db_entity.nodeData import NodeData
+from uaclient.db_entity.deviceNodeData import DeviceNodeData
 
 
 def save2database(func):
@@ -46,7 +46,8 @@ def _do_save():
             # print(f"处理节点: {node}, 数据: {data_stack}")
             if data_stack:
                 data, time_str = data_stack.pop()
-                data_list.append(NodeData(
+                data_list.append(DeviceNodeData(
+                    device=device,
                     node=str(node),
                     data=str(data),
                     created_at=parser.parse(time_str)

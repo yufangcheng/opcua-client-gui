@@ -6,6 +6,9 @@ _parser = argparse.ArgumentParser()
 
 _parser.add_argument('--debug', action='store_true', default=False)
 
+# 设备号（存储数据时必须）
+_parser.add_argument('--device', type=str, required=True)
+
 # 数据库相关配置
 _parser.add_argument('--standalone', action='store_true', default=False)  # 开启这项将使用 SQLite 数据库
 _parser.add_argument('--db_host', default='localhost')
@@ -23,6 +26,11 @@ _args = _parser.parse_args()
 
 # 是否为调试模式
 debug_mode = _args.debug
+
+# 设备号
+device = _args.device
+
+# 是否是独立运行（使用SQLite）
 db_standalone = _args.standalone
 
 db_config = {
