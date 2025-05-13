@@ -48,7 +48,7 @@ def _do_save():
             if data_stack:
                 data, time_str = data_stack.pop()
                 data_list.append(DeviceNodeData(
-                    device=device,
+                    device=device['name'],
                     node=str(node),
                     data=str(data),
                     created_at=parser.parse(time_str)
@@ -74,7 +74,7 @@ def _do_group():
             if len(new_nodes) > 0:
                 for node in new_nodes:
                     nodes.append(DeviceNode(
-                        device=device,
+                        device=device['name'],
                         node=str(node),
                     ))
             if len(nodes) > 0:

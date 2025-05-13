@@ -5,6 +5,7 @@ import schedule
 import sys
 import threading
 import time
+import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import List, Any, Callable
@@ -23,12 +24,13 @@ from uawidgets.tree_widget import TreeWidget
 from uawidgets.utils import trycatchslot
 
 from uaclient.application_certificate_dialog import ApplicationCertificateDialog
-from uaclient.config.clientConfig import collect_enabled, collect_freq_sec, group_node_sec
+from uaclient.config.clientConfig import device, collect_enabled, collect_freq_sec, group_node_sec
 from uaclient.connection_dialog import ConnectionDialog
 from uaclient.graphwidget import GraphUI
 from uaclient.mainwindow_ui import Ui_MainWindow
 from uaclient.persistence import save2database, save_to_database, group_nodes
 from uaclient.uaclient import UaClient
+from uaclient.config.serverList import serverList
 
 logger = logging.getLogger(__name__)
 
@@ -251,10 +253,9 @@ class Window(QMainWindow):
         QCoreApplication.setApplicationName("OpcUaClient")
         self.settings = QSettings()
 
-        self._address_list = self.settings.value("address_list", ["opc.tcp://localhost:4840",
-                                                                  "opc.tcp://localhost:53530/OPCUA/SimulationServer/"])
-        print("ADR", self._address_list)
-        self._address_list_max_count = int(self.settings.value("address_list_max_count", 10))
+        self._address_list = serverList  # self.settings.value("address_list", serverList)
+        # print("ADR", self._address_list)
+        self._address_list_max_count = int(self.settings.value("address_list_max_count", 50))
 
         # init widgets
         for addr in self._address_list:
@@ -370,9 +371,15 @@ class Window(QMainWindow):
     @trycatchslot
     def connect(self):
         uri = self.ui.addrComboBox.currentText()
-        uri = uri.strip()
         try:
-            self.uaclient.connect(uri)
+            pattern = r'(^.*?)(opc\.tcp://.+:\d{1,5})$'
+            match = re.match(pattern, uri.strip())
+            if match:
+                device['name'] = match.group(1)
+                uri = match.group(2)
+                self.uaclient.connect(uri)
+            else:
+                raise "无法获取 Server 地址！"
         except Exception as ex:
             self.show_error(ex)
             raise
