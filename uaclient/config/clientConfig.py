@@ -36,8 +36,8 @@ db_config = {
 # 采集频率和采集 buff 大小
 collect_enabled = args.collect_enabled
 collect_buff_size = args.collect_buff_size
-if collect_buff_size < 0:
+if collect_buff_size < 1:
     collect_buff_size = 5
 collect_freq_sec = args.collect_freq_sec
-if collect_freq_sec < 1:
+if collect_freq_sec < 2:
     collect_freq_sec: 2
