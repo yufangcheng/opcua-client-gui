@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QFileDialog
+from uawidgets.utils import trycatchslot
 
 from uaclient.connection_ui import Ui_ConnectionDialog
-from uawidgets.utils import trycatchslot
 
 
 class ConnectionDialog(QDialog):
@@ -13,7 +13,7 @@ class ConnectionDialog(QDialog):
         self.uaclient = parent.uaclient
         self.uri = uri
         self.parent = parent
-        
+
         self.ui.modeComboBox.addItem("None")
         self.ui.modeComboBox.addItem("Sign")
         self.ui.modeComboBox.addItem("SignAndEncrypt")
@@ -91,5 +91,3 @@ class ConnectionDialog(QDialog):
         path, ok = QFileDialog.getOpenFileName(self, "Select private key", self.private_key_path, "Private key (*.pem)")
         if ok:
             self.ui.privateKeyLabel.setText(path)
-
-

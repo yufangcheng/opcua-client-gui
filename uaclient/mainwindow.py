@@ -1,8 +1,13 @@
 #! /usr/bin/env python3
 
 import logging
+import schedule
 import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from typing import List, Any, Callable
 
 from PyQt5.QtCore import pyqtSignal, QFile, QTimer, Qt, QObject, QSettings, QTextStream, QItemSelection, \
     QCoreApplication
@@ -18,15 +23,12 @@ from uawidgets.tree_widget import TreeWidget
 from uawidgets.utils import trycatchslot
 
 from uaclient.application_certificate_dialog import ApplicationCertificateDialog
+from uaclient.config.clientConfig import collect_enabled, collect_freq_sec
 from uaclient.connection_dialog import ConnectionDialog
 from uaclient.graphwidget import GraphUI
 from uaclient.mainwindow_ui import Ui_MainWindow
-from uaclient.config.clientConfig import collect_enabled, collect_freq_sec
 from uaclient.persistence import save2database, save_to_database
 from uaclient.uaclient import UaClient
-import threading, schedule, time
-from typing import List, Any, Callable
-from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 

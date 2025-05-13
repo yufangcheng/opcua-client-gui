@@ -1,12 +1,11 @@
 #! /usr/bin/env python3
 
 import logging
+
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QLabel
-
 from asyncua import ua
 from asyncua.sync import SyncNode
-
 from uawidgets.utils import trycatchslot
 
 use_graph = True
@@ -26,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class GraphUI(object):
-
     # use tango color schema (public domain)
     colorCycle = ['#4e9a06ff', '#ce5c00ff', '#3465a4ff', '#75507bff', '#cc0000ff', '#edd400ff']
     acceptedDatatypes = ['Decimal128', 'Double', 'Float', 'Integer', 'UInteger']
@@ -96,7 +94,8 @@ class GraphUI(object):
                 displayName = node.read_display_name().Text
                 colorIndex = len(self._node_list) % len(self.colorCycle)
                 self._curves.append \
-                    (self.pw.plot(pen=pg.mkPen(color=self.colorCycle[colorIndex], width=3, style=Qt.SolidLine), name=displayName))
+                    (self.pw.plot(pen=pg.mkPen(color=self.colorCycle[colorIndex], width=3, style=Qt.SolidLine),
+                                  name=displayName))
                 # set initial data to zero
                 self._channels.append(np.zeros(self.N))  # init data sequence with zeros
                 # add the new channel data to the new curve

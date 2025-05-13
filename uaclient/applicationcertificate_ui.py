@@ -40,7 +40,7 @@ class Ui_ApplicationCertificateDialog(object):
         self.gridLayout.addWidget(self.certificateButton, 1, 2, 1, 1)
         self.buttonBox = QtWidgets.QDialogButtonBox(ApplicationCertificateDialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.gridLayout.addWidget(self.buttonBox, 4, 0, 1, 3)
 
@@ -51,7 +51,8 @@ class Ui_ApplicationCertificateDialog(object):
 
     def retranslateUi(self, ApplicationCertificateDialog):
         _translate = QtCore.QCoreApplication.translate
-        ApplicationCertificateDialog.setWindowTitle(_translate("ApplicationCertificateDialog", "ApplicationCertificateDialog"))
+        ApplicationCertificateDialog.setWindowTitle(
+            _translate("ApplicationCertificateDialog", "ApplicationCertificateDialog"))
         self.privateKeyLabel.setText(_translate("ApplicationCertificateDialog", "None"))
         self.privateKeyButton.setText(_translate("ApplicationCertificateDialog", "Select private key"))
         self.certificateLabel.setText(_translate("ApplicationCertificateDialog", "None"))

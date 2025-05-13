@@ -1,12 +1,10 @@
 import logging
 
 from PyQt5.QtCore import QSettings
-
+from asyncua import crypto
 from asyncua import ua
 from asyncua.sync import Client, SyncNode
-from asyncua import crypto
 from asyncua.tools import endpoint_to_strings
-
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +100,8 @@ class UaClient(object):
 
     def connect(self, uri):
         self.disconnect()
-        logger.info("Connecting to %s with parameters %s, %s, %s, %s", uri, self.security_mode, self.security_policy, self.user_certificate_path, self.user_private_key_path)
+        logger.info("Connecting to %s with parameters %s, %s, %s, %s", uri, self.security_mode, self.security_policy,
+                    self.user_certificate_path, self.user_private_key_path)
         self.client = Client(uri)
         self.client.application_uri = self.application_uri
         self.client.description = "FreeOpcUa Client GUI"

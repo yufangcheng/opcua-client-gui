@@ -1,11 +1,11 @@
-import math
 from collections import defaultdict
+
+from dateutil import parser
 from sqlalchemy.orm import sessionmaker
+
 from uaclient.config.clientConfig import collect_buff_size
 from uaclient.config.mysqlConfig import engine
 from uaclient.db_entity.nodeData import NodeData
-from dateutil import parser
-from concurrent.futures import ThreadPoolExecutor
 
 
 def save2database(func):

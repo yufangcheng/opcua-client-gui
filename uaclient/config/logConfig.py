@@ -1,4 +1,5 @@
 import logging
+
 from uaclient.config.clientConfig import app_name
 
 logger = logging.getLogger(__name__)

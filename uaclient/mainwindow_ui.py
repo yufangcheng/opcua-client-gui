@@ -353,9 +353,11 @@ class Ui_MainWindow(object):
         self.actionDisconnect.setText(_translate("MainWindow", "&Disconnect"))
         self.actionDisconnect.setToolTip(_translate("MainWindow", "Disconnect from server"))
         self.actionSubscribeDataChange.setText(_translate("MainWindow", "&Subscribe to data change"))
-        self.actionSubscribeDataChange.setToolTip(_translate("MainWindow", "Subscribe to data change from selected node"))
+        self.actionSubscribeDataChange.setToolTip(
+            _translate("MainWindow", "Subscribe to data change from selected node"))
         self.actionUnsubscribeDataChange.setText(_translate("MainWindow", "&Unsubscribe to DataChange"))
-        self.actionUnsubscribeDataChange.setToolTip(_translate("MainWindow", "Unsubscribe to DataChange for current node"))
+        self.actionUnsubscribeDataChange.setToolTip(
+            _translate("MainWindow", "Unsubscribe to DataChange for current node"))
         self.actionSubscribeEvent.setText(_translate("MainWindow", "Subscribe to &events"))
         self.actionSubscribeEvent.setToolTip(_translate("MainWindow", "Subscribe to events from selected node"))
         self.actionUnsubscribeEvents.setText(_translate("MainWindow", "U&nsubscribe to Events"))
