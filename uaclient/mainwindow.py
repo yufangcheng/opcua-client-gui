@@ -28,7 +28,7 @@ from uaclient.config.clientConfig import device, collect_enabled, collect_freq_s
 from uaclient.connection_dialog import ConnectionDialog
 from uaclient.graphwidget import GraphUI
 from uaclient.mainwindow_ui import Ui_MainWindow
-from uaclient.persistence import save2database, save_to_database, group_nodes
+from uaclient.persistence import save2database, save_to_database, group_nodes, save_to_database2
 from uaclient.uaclient import UaClient
 from uaclient.config.serverList import serverList
 
@@ -54,6 +54,7 @@ class EventHandler(QObject):
     def event_notification(self, event):
         self.event_fired.emit(event)
 
+subscribed_nodes = []
 
 class EventUI(object):
 
@@ -189,6 +190,7 @@ class DataChangeUI(object):
             row = [QStandardItem(text), QStandardItem("No Data yet"), QStandardItem("")]
             row[0].setData(node)
             self.model.appendRow(row)
+            subscribed_nodes.append(node)
             self._subscribed_nodes.append(node)
             # 调用 raise_() 方法将窗口部件提升到其所在父窗口部件堆叠顺序的最顶层
             self.window.ui.subDockWidget.raise_()
@@ -206,6 +208,7 @@ class DataChangeUI(object):
         if node is None:
             return
         self.uaclient.unsubscribe_datachange(node)
+        subscribed_nodes.remove(node)
         self._subscribed_nodes.remove(node)
         i = 0
         while self.model.item(i):
@@ -214,7 +217,7 @@ class DataChangeUI(object):
                 self.model.removeRow(i)
             i += 1
 
-    @save2database
+    # @save2database
     def _update_subscription_model(self, node, value, timestamp):
         i = 0
         while self.model.item(i):
@@ -535,6 +538,12 @@ def persist_data():
     # t2.start()
 
 
+def readSubscribedNodesValues():
+    threading.Thread(target=lambda: runIntervalTask(collect_freq_sec, lambda: [
+        save_to_database2(subscribed_nodes)
+    ])).start()
+
+
 def main():
     app = QApplication(sys.argv)
     client = Window()
@@ -554,7 +563,8 @@ def main():
     client.show()
     # 开启数据采集入库之后才会保存到数据库
     if collect_enabled:
-        persist_data()
+        # persist_data()
+        readSubscribedNodesValues()
     sys.exit(app.exec_())
 
 

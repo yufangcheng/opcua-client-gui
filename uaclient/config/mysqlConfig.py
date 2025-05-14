@@ -11,6 +11,7 @@ from uaclient.config.logConfig import logger
 在 standalone 模式下，使用 SQLite 数据库，启动后使用 Base.metadata.create_all() 创建表
 """
 from uaclient.db_entity.deviceNodeData import DeviceNodeData
+from uaclient.db_entity.deviceNodeData2 import DeviceNodeData2
 from uaclient.db_entity.deviceNode import DeviceNode
 
 """

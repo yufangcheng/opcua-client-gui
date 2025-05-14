@@ -7,7 +7,9 @@ from sqlalchemy.orm import sessionmaker
 from uaclient.config.clientConfig import device, collect_buff_size
 from uaclient.config.mysqlConfig import engine
 from uaclient.db_entity.deviceNodeData import DeviceNodeData
+from uaclient.db_entity.deviceNodeData2 import DeviceNodeData2
 from uaclient.db_entity.deviceNode import DeviceNode
+import json
 
 
 def save2database(func):
@@ -36,6 +38,25 @@ def save_to_database():
     #     max_worker_num = 3
     # with ThreadPoolExecutor(max_workers=max_worker_num) as executor:
     #     executor.submit(_do_save)
+
+
+def save_to_database2(subscribed_nodes):
+    if len(subscribed_nodes) > 0:
+        session = sessionmaker(bind=engine)
+        with session() as s:
+            data = {}
+            source_datetime = None
+            for node in subscribed_nodes:
+                data[node.nodeid.to_string()] = node.read_value()
+                if source_datetime is None:
+                    source_datetime = node.get_data_value().SourceTimestamp
+            s.add(DeviceNodeData2(
+                device=device['name'],
+                data=str(json.dumps(data, ensure_ascii=False)),
+                data_report_at=source_datetime,
+                created_at=datetime.now()
+            ))
+            s.commit()
 
 
 def _do_save():
