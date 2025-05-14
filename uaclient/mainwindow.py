@@ -252,7 +252,7 @@ class Window(QMainWindow):
         self.ui.statusBar.hide()
 
         # setup QSettings for application and get a settings object
-        QCoreApplication.setOrganizationName("FreeOpcUa")
+        QCoreApplication.setOrganizationName("Fourier")
         QCoreApplication.setApplicationName("OpcUaClient")
         self.settings = QSettings()
 

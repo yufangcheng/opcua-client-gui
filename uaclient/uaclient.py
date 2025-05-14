@@ -104,7 +104,7 @@ class UaClient(object):
                     self.user_certificate_path, self.user_private_key_path)
         self.client = Client(uri)
         self.client.application_uri = self.application_uri
-        self.client.description = "FreeOpcUa Client GUI"
+        self.client.description = "OpcUa Client GUI"
 
         # Set user identity token
         if self.user_private_key_path:
