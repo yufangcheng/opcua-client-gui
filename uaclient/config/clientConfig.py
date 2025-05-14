@@ -20,7 +20,7 @@ _parser.add_argument('--db_name', default='data')
 # 采集相关配置
 _parser.add_argument('--collect_enabled', action='store_true', default=False)
 _parser.add_argument('--collect_buff_size', type=int, default=5)
-_parser.add_argument('--collect_freq_sec', type=int, default=3)
+_parser.add_argument('--collect_freq_sec', type=int, default=6)
 _parser.add_argument('--group_node_sec', type=int, default=30)
 
 _args = _parser.parse_args()
@@ -52,7 +52,7 @@ if collect_buff_size < 1:
     collect_buff_size = 5
 collect_freq_sec = _args.collect_freq_sec
 if collect_freq_sec < 1:
-    collect_freq_sec: 1
+    collect_freq_sec = 6
 group_node_sec = _args.group_node_sec
 if group_node_sec < 1:
     group_node_sec = 30

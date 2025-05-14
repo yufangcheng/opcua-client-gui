@@ -375,7 +375,7 @@ class Window(QMainWindow):
             pattern = r'(^.*?)(opc\.tcp://.+:\d{1,5})$'
             match = re.match(pattern, uri.strip())
             if match:
-                device['name'] = match.group(1)
+                device['name'] = match.group(1).strip()
                 uri = match.group(2)
                 self.uaclient.connect(uri)
             else:
@@ -526,13 +526,13 @@ def persist_data():
     t1 = threading.Thread(target=lambda: runIntervalTask(collect_freq_sec, lambda: [
         save_to_database()
     ]))
-    t2 = threading.Thread(target=lambda: runIntervalTask(group_node_sec, lambda: [
-        group_nodes()
-    ]))
+    # t2 = threading.Thread(target=lambda: runIntervalTask(group_node_sec, lambda: [
+    #     group_nodes()
+    # ]))
     t1.daemon = True
-    t2.daemon = True
+    # t2.daemon = True
     t1.start()
-    t2.start()
+    # t2.start()
 
 
 def main():

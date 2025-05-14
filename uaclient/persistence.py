@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from dateutil import parser
+from datetime import datetime
 from sqlalchemy.orm import sessionmaker
 
 from uaclient.config.clientConfig import device, collect_buff_size
@@ -51,7 +52,8 @@ def _do_save():
                     device=device['name'],
                     node=str(node),
                     data=str(data),
-                    created_at=parser.parse(time_str)
+                    data_report_at=parser.parse(time_str),
+                    created_at=datetime.now()
                 ))
         if data_list:
             # print(f"保存数据到数据库，条数: {len(data_list)}")
