@@ -33,6 +33,7 @@ from uaclient.uaclient import UaClient
 from uaclient.config.serverList import serverList
 
 logger = logging.getLogger(__name__)
+stop_event = threading.Event()
 
 
 class DataChangeHandler(QObject):
@@ -54,7 +55,9 @@ class EventHandler(QObject):
     def event_notification(self, event):
         self.event_fired.emit(event)
 
+
 subscribed_nodes = []
+
 
 class EventUI(object):
 
@@ -389,8 +392,18 @@ class Window(QMainWindow):
 
         self._update_address_list(uri)
         self.tree_ui.set_root_node(self.uaclient.client.nodes.root)
+        print(f'叶子节点总数：{self.calculate_node_num(self.uaclient.client.nodes.root)}')
         self.ui.treeView.setFocus()
         self.load_current_node()
+
+    def calculate_node_num(self, *nodes) -> int:
+        num = 0
+        for node in nodes:
+            if len(node.get_children()) > 0:
+                num = num + self.calculate_node_num(*node.get_children())
+            else:
+                num = num + 1
+        return num
 
     def _update_address_list(self, uri):
         if uri == self._address_list[0]:
@@ -416,6 +429,7 @@ class Window(QMainWindow):
             self.event_ui.clear()
 
     def closeEvent(self, event):
+        stop_event.set()
         self.tree_ui.save_state()
         self.attrs_ui.save_state()
         self.refs_ui.save_state()
@@ -519,7 +533,7 @@ def batch_process(array: List[Any], batch_size: int = 20, interval: float = 1.0,
 
 def runIntervalTask(interval, task):
     schedule.every(interval).seconds.do(task)
-    while True:
+    while not stop_event.is_set():
         schedule.run_pending()
         time.sleep(1)
 
@@ -539,9 +553,11 @@ def persist_data():
 
 
 def readSubscribedNodesValues():
-    threading.Thread(target=lambda: runIntervalTask(collect_freq_sec, lambda: [
+    t = threading.Thread(target=lambda: runIntervalTask(collect_freq_sec, lambda: [
         save_to_database2(subscribed_nodes)
-    ])).start()
+    ]))
+    t.daemon = True
+    t.start()
 
 
 def main():
@@ -561,10 +577,12 @@ def main():
         app.setStyleSheet(stream.readAll())
 
     client.show()
+
     # 开启数据采集入库之后才会保存到数据库
     if collect_enabled:
         # persist_data()
         readSubscribedNodesValues()
+
     sys.exit(app.exec_())
 
 
