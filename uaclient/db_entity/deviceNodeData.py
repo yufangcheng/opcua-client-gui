@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, TIMESTAMP
 
 from . import Base
 
@@ -14,5 +14,5 @@ class DeviceNodeData(Base):
     device = Column(String(50), nullable=False, comment='设备')
     node = Column(String(300), nullable=False, comment='节点')
     data = Column(Text(500), nullable=False, comment='数据')
-    data_report_at = Column(DateTime, nullable=False, comment='数据上报时间')
-    created_at = Column(DateTime, nullable=False, comment='数据入库时间')
+    data_report_at = Column(TIMESTAMP, nullable=False, comment='数据时间')
+    created_at = Column(TIMESTAMP, nullable=False, comment='采集时间')

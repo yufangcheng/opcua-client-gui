@@ -24,11 +24,11 @@ from uawidgets.tree_widget import TreeWidget
 from uawidgets.utils import trycatchslot
 
 from uaclient.application_certificate_dialog import ApplicationCertificateDialog
-from uaclient.config.clientConfig import device, collect_enabled, collect_freq_sec, group_node_sec
+from uaclient.config.clientConfig import device, collect_enabled, collect_freq_sec
 from uaclient.connection_dialog import ConnectionDialog
 from uaclient.graphwidget import GraphUI
 from uaclient.mainwindow_ui import Ui_MainWindow
-from uaclient.persistence import save2database, save_to_database, group_nodes, save_to_database2
+from uaclient.persistence import save_to_database_from_stack, save_to_database_from_reading_nodes
 from uaclient.uaclient import UaClient
 from uaclient.config.serverList import serverList
 
@@ -56,6 +56,7 @@ class EventHandler(QObject):
         self.event_fired.emit(event)
 
 
+# 可读取配置文件、或GUI界面订阅节点配置需要采集的节点
 subscribed_nodes = []
 
 
@@ -542,20 +543,15 @@ def runIntervalTask(interval, task):
 def persist_data():
     time.sleep(3)
     t1 = threading.Thread(target=lambda: runIntervalTask(collect_freq_sec, lambda: [
-        save_to_database()
+        save_to_database_from_stack()
     ]))
-    # t2 = threading.Thread(target=lambda: runIntervalTask(group_node_sec, lambda: [
-    #     group_nodes()
-    # ]))
     t1.daemon = True
-    # t2.daemon = True
     t1.start()
-    # t2.start()
 
 
 def readSubscribedNodesValues():
     t = threading.Thread(target=lambda: runIntervalTask(collect_freq_sec, lambda: [
-        save_to_database2(subscribed_nodes)
+        save_to_database_from_reading_nodes(subscribed_nodes)
     ]))
     t.daemon = True
     t.start()
@@ -582,7 +578,7 @@ def main():
     # 开启数据采集入库之后才会保存到数据库
     if collect_enabled:
         # persist_data()
-        readSubscribedNodesValues()
+        readSubscribedNodesValues()  # 定期读取订阅的节点数据并保存入库
 
     sys.exit(app.exec_())
 

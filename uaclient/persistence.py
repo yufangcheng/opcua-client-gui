@@ -1,18 +1,23 @@
+import csv
+import json
+import os
 from collections import defaultdict
+from datetime import datetime
 
 from dateutil import parser
-from datetime import datetime
 from sqlalchemy.orm import sessionmaker
 
 from uaclient.config.clientConfig import device, collect_buff_size
 from uaclient.config.mysqlConfig import engine
 from uaclient.db_entity.deviceNodeData import DeviceNodeData
 from uaclient.db_entity.deviceNodeData2 import DeviceNodeData2
-from uaclient.db_entity.deviceNode import DeviceNode
-import json
 
 
 def save2database(func):
+    """
+    使用该装饰器可以将采集数据压入内存栈
+    """
+
     def wrapper(self, *args):
         device_upload(*args)
         return func(self, *args)
@@ -24,6 +29,9 @@ _buffer = defaultdict(list)
 
 
 def device_upload(node, value, timestamp):
+    """
+    将采集数据压入内存栈中，最多 collect_buff_size 个
+    """
     stack = _buffer[node]
     stack.append((value, timestamp))
     if len(stack) > collect_buff_size:
@@ -31,35 +39,10 @@ def device_upload(node, value, timestamp):
     # print(f"节点: {node}, 数据条数: {len(stack)}")
 
 
-def save_to_database():
-    _do_save()
-    # max_worker_num = math.floor(len(buffer.items()) / 5)
-    # if max_worker_num < 1:
-    #     max_worker_num = 3
-    # with ThreadPoolExecutor(max_workers=max_worker_num) as executor:
-    #     executor.submit(_do_save)
-
-
-def save_to_database2(subscribed_nodes):
-    if len(subscribed_nodes) > 0:
-        session = sessionmaker(bind=engine)
-        with session() as s:
-            data = {}
-            source_datetime = None
-            for node in subscribed_nodes:
-                data[node.nodeid.to_string()] = node.read_value()
-                if source_datetime is None:
-                    source_datetime = node.get_data_value().SourceTimestamp
-            s.add(DeviceNodeData2(
-                device=device['name'],
-                data=str(json.dumps(data, ensure_ascii=False)),
-                data_report_at=source_datetime,
-                created_at=datetime.now()
-            ))
-            s.commit()
-
-
-def _do_save():
+def save_to_database_from_stack():
+    """
+    从内存栈中读取数据并保存到数据库
+    """
     session = sessionmaker(bind=engine)
     with session() as s:
         data_list = []
@@ -82,24 +65,66 @@ def _do_save():
             s.commit()
 
 
-def group_nodes():
-    _do_group()
+def save_to_database_from_reading_nodes(subscribed_nodes):
+    """
+    读取订阅节点的数据并保存到数据库
+    """
+    if len(subscribed_nodes) > 0:
+        session = sessionmaker(bind=engine)
+        with session() as s:
+            data = {}
+            data_list = []
+            headers = ['机台编号', '采集时间']
+            source_datetime = None
+            for node in subscribed_nodes:
+                display_name = node.read_display_name().Text
+                headers.append(display_name)
+                node_value = node.read_value()
+                data_list.append(node_value)
+                data[node.nodeid.to_string()] = node_value
+                if source_datetime is None:
+                    source_datetime = node.get_data_value().SourceTimestamp
+
+            rows = [
+                device['name'],
+                int(source_datetime.timestamp())
+            ]
+            rows.extend(data_list)
+            save_to_csv(headers, rows, f"{device['name']}_{datetime.now().strftime('%Y%m%d')}.csv")
+
+            s.add(DeviceNodeData2(
+                device=device['name'],
+                data=str(json.dumps(data, ensure_ascii=False)),
+                data_report_at=int(source_datetime.timestamp()),
+                created_at=int(datetime.now().timestamp())
+            ))
+            s.commit()
 
 
-def _do_group():
-    session = sessionmaker(bind=engine)
-    with session() as s:
-        results = [row[0] for row in s.query(DeviceNodeData.node).group_by(DeviceNodeData.node).all()]
-        if len(results) > 0:
-            existed_nodes = {row[0] for row in s.query(DeviceNode.node).filter(DeviceNode.node.in_(results))}
-            new_nodes = [item for item in results if item not in existed_nodes]
-            nodes = []
-            if len(new_nodes) > 0:
-                for node in new_nodes:
-                    nodes.append(DeviceNode(
-                        device=device['name'],
-                        node=str(node),
-                    ))
-            if len(nodes) > 0:
-                s.add_all(nodes)
-                s.commit()
+def save_to_csv(headers, data, file_path):
+    if not headers:
+        return
+    if not file_path:
+        print("保存位置不能为空")
+        return
+    # 检查文件是否存在
+    file_exists = os.path.exists(file_path)
+
+    try:
+        # 使用 'a' 模式打开文件以追加内容，设置 newline='' 避免 Windows 平台行末多出空行
+        with open(file_path, 'a', newline='', encoding='GB2312') as csvfile:
+            # 创建 CSV 写入器对象
+            writer = csv.writer(csvfile)
+
+            # 如果文件不存在，写入列名
+            if not file_exists:
+                writer.writerow(headers)
+
+            # 写入多行数据
+            writer.writerows([data])
+
+        action = "创建" if not file_exists else "追加"
+        print(f"CSV 文件已成功{action}：{file_path}")
+
+    except Exception as e:
+        print(f"处理 CSV 文件时出错：{e}")

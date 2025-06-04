@@ -1,5 +1,6 @@
 serverList = [
-    # 'Localhost opc.tcp://fourier-yfc:48020',
+    'Localhost opc.tcp://DESKTOP-RKHP2AA:48020',
+    'Localhost opc.tcp://fourier-yfc:48020',
     '北方华创L14（TH） opc.tcp://10.199.88.75:3366',
     '北方华创L15（TH） opc.tcp://10.199.88.76:3366',
     '北方华创L16（TH） opc.tcp://10.199.88.77:3366',
