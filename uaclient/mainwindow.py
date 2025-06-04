@@ -200,10 +200,11 @@ class DataChangeUI(object):
             try:
                 self.uaclient.subscribe_datachange(node, self._subhandler)
             except Exception as ex:
-                self.window.show_error(ex)
+                # self.window.show_error(ex)
                 idx = self.model.indexFromItem(row[0])
                 self.model.takeRow(idx.row())
-                raise
+                # raise
+                logger.warning(ex)
 
     @trycatchslot
     def _unsubscribe(self):
@@ -392,7 +393,7 @@ class Window(QMainWindow):
 
         self._update_address_list(uri)
         self.tree_ui.set_root_node(self.uaclient.client.nodes.root)
-        print(f'叶子节点总数：{self.calculate_node_num(self.uaclient.client.nodes.root)}')
+        # print(f'叶子节点总数：{self.calculate_node_num(self.uaclient.client.nodes.root)}')
         self.ui.treeView.setFocus()
         self.load_current_node()
 
